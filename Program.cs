@@ -1,25 +1,25 @@
 using MongoDB.Driver;
 using MongoDB.Bson;
+using Microsoft.AspNetCore.Identity;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Add services to the container.
-builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen();
-
-// Retrieve MongoDB connection string from appsettings.json
+// Retrieve MongoDB connection string and database name from appsettings.json
 var mongoDBSettings = builder.Configuration.GetSection("MongoDBSettings");
 var connectionUri = mongoDBSettings.GetValue<string>("ConnectionString");
 var databaseName = mongoDBSettings.GetValue<string>("DatabaseName");
 
+// Set up MongoDB client settings
 var settings = MongoClientSettings.FromConnectionString(connectionUri);
 settings.ServerApi = new ServerApi(ServerApiVersion.V1);
 var client = new MongoClient(settings);
 
 // Register MongoClient and IMongoDatabase with the DI container
 builder.Services.AddSingleton<IMongoClient>(client);
-builder.Services.AddSingleton<IMongoDatabase>(sp =>
-    client.GetDatabase(databaseName));
+builder.Services.AddSingleton<IMongoDatabase>(sp => client.GetDatabase(databaseName));
+
+// Register UserService with the DI container
+builder.Services.AddSingleton<UserService>();
 
 var app = builder.Build();
 
@@ -40,32 +40,14 @@ try
 }
 catch (Exception ex)
 {
-    Console.WriteLine(ex);
+    Console.WriteLine($"Error connecting to MongoDB: {ex.Message}");
 }
 
-var summaries = new[]
+// Define an API endpoint to create a new user
+app.MapPost("/create-user", (UserService userService, string username, string password, string role) =>
 {
-    "Freezing", "Bracing", "Chilly", "Cool", "Mild", "Warm", "Balmy", "Hot", "Sweltering", "Scorching"
-};
-
-app.MapGet("/weatherforecast", () =>
-{
-    var forecast = Enumerable.Range(1, 5).Select(index =>
-        new WeatherForecast
-        (
-            DateOnly.FromDateTime(DateTime.Now.AddDays(index)),
-            Random.Shared.Next(-20, 55),
-            summaries[Random.Shared.Next(summaries.Length)]
-        ))
-        .ToArray();
-    return forecast;
-})
-.WithName("GetWeatherForecast")
-.WithOpenApi();
+    var user = userService.CreateUser(username, password, role);
+    return Results.Ok(user);
+});
 
 app.Run();
-
-record WeatherForecast(DateOnly Date, int TemperatureC, string? Summary)
-{
-    public int TemperatureF => 32 + (int)(TemperatureC / 0.5556);
-}
