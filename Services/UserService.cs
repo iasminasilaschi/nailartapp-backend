@@ -1,5 +1,5 @@
-﻿using Microsoft.AspNetCore.Identity;
-using MongoDB.Driver;
+﻿using MongoDB.Driver;
+using Microsoft.AspNetCore.Identity;
 
 public class UserService
 {
@@ -8,40 +8,47 @@ public class UserService
 
     public UserService(IMongoDatabase database)
     {
-        // Initialize the MongoDB collection
         _usersCollection = database.GetCollection<User>("Users");
 
-        // Initialize the password hasher
+        // Ensure a unique index on the Username field
+        var indexOptions = new CreateIndexOptions { Unique = true };
+        var indexKeys = Builders<User>.IndexKeys.Ascending(u => u.Username);
+        var indexModel = new CreateIndexModel<User>(indexKeys, indexOptions);
+        _usersCollection.Indexes.CreateOne(indexModel);
+
         _passwordHasher = new PasswordHasher<User>();
     }
 
-    // Method to create a new user with hashed password and save to database
-    public User CreateUser(string username, string password, string role)
+    public (bool Success, string Message) CreateUser(string username, string password, string role)
     {
-        // Create a new user object
+        // Check if the username already exists
+        var existingUser = _usersCollection.Find(u => u.Username == username).FirstOrDefault();
+        if (existingUser != null)
+        {
+            return (false, "Username already exists.");
+        }
+
+        // Create and hash the password
         var user = new User
         {
             Username = username,
-            PasswordHash = _passwordHasher.HashPassword(null, password),  // Hash the password
-            Role = role  // Assign the role
+            PasswordHash = _passwordHasher.HashPassword(null, password),
+            Role = role
         };
 
-        // Save the user to the MongoDB collection
+        // Save the new user to the database
         _usersCollection.InsertOne(user);
-
-        return user;
+        return (true, "User created successfully.");
     }
 
-    // Method to find a user by username (e.g., for login purposes)
     public User GetUserByUsername(string username)
     {
         return _usersCollection.Find(u => u.Username == username).FirstOrDefault();
     }
 
-    // Method to verify a user's password during login
-    public bool VerifyPassword(User user, string providedPassword)
+    // Optional: Implement a method to get all users, which can be useful for testing.
+    public List<User> GetAllUsers()
     {
-        var result = _passwordHasher.VerifyHashedPassword(user, user.PasswordHash, providedPassword);
-        return result == PasswordVerificationResult.Success;
+        return _usersCollection.Find(u => true).ToList();
     }
 }

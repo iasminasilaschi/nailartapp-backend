@@ -46,8 +46,13 @@ catch (Exception ex)
 // Define an API endpoint to create a new user
 app.MapPost("/create-user", (UserService userService, string username, string password, string role) =>
 {
-    var user = userService.CreateUser(username, password, role);
-    return Results.Ok(user);
+    var result = userService.CreateUser(username, password, role);
+    if (!result.Success)
+    {
+        return Results.BadRequest(result.Message);
+    }
+    return Results.Ok(result.Message);
 });
+
 
 app.Run();
