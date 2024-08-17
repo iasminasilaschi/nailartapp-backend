@@ -1,6 +1,9 @@
 using MongoDB.Driver;
 using MongoDB.Bson;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.IdentityModel.Tokens;
+using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -18,10 +21,33 @@ var client = new MongoClient(settings);
 builder.Services.AddSingleton<IMongoClient>(client);
 builder.Services.AddSingleton<IMongoDatabase>(sp => client.GetDatabase(databaseName));
 
-// Register UserService with the DI container
-builder.Services.AddSingleton<UserService>();
+// JWT configuration
+var key = Encoding.ASCII.GetBytes(builder.Configuration["JwtSettings:SecretKey"]);
+builder.Services.AddAuthentication(options =>
+{
+    options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+    options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+})
+.AddJwtBearer(options =>
+{
+    options.TokenValidationParameters = new TokenValidationParameters
+    {
+        ValidateIssuerSigningKey = true,
+        IssuerSigningKey = new SymmetricSecurityKey(key),
+        ValidateIssuer = false,
+        ValidateAudience = false
+    };
+});
+
+builder.Services.AddAuthorization();
+
+// Register UserService with the DI container, passing in the secret key
+builder.Services.AddSingleton<UserService>(sp => new UserService(sp.GetRequiredService<IMongoDatabase>(), builder.Configuration["JwtSettings:SecretKey"]));
 
 var app = builder.Build();
+
+app.UseAuthentication();
+app.UseAuthorization();
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
@@ -52,6 +78,16 @@ app.MapPost("/create-user", (UserService userService, string username, string pa
         return Results.BadRequest(result.Message);
     }
     return Results.Ok(result.Message);
+});
+
+app.MapPost("/login", (UserService userService, string username, string password) =>
+{
+    var result = userService.AuthenticateUser(username, password);
+    if (!result.Success)
+    {
+        return Results.BadRequest(result.Message);
+    }
+    return Results.Ok(new { token = result.Token });
 });
 
 
