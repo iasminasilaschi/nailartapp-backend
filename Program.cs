@@ -40,6 +40,7 @@ builder.Services.AddAuthentication(options =>
 });
 
 builder.Services.AddAuthorization();
+builder.Services.AddControllers();
 
 // Register UserService with the DI container, passing in the secret key
 builder.Services.AddSingleton<UserService>(sp => new UserService(sp.GetRequiredService<IMongoDatabase>(), builder.Configuration["JwtSettings:SecretKey"]));
@@ -57,6 +58,7 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
+app.MapControllers();
 
 // Ping MongoDB to confirm the connection
 try
@@ -68,27 +70,5 @@ catch (Exception ex)
 {
     Console.WriteLine($"Error connecting to MongoDB: {ex.Message}");
 }
-
-// Define an API endpoint to create a new user
-app.MapPost("/create-user", (UserService userService, string username, string password, string role) =>
-{
-    var result = userService.CreateUser(username, password, role);
-    if (!result.Success)
-    {
-        return Results.BadRequest(result.Message);
-    }
-    return Results.Ok(result.Message);
-});
-
-app.MapPost("/login", (UserService userService, string username, string password) =>
-{
-    var result = userService.AuthenticateUser(username, password);
-    if (!result.Success)
-    {
-        return Results.BadRequest(result.Message);
-    }
-    return Results.Ok(new { token = result.Token });
-});
-
 
 app.Run();

@@ -25,7 +25,7 @@ public class UserService
         _jwtSecretKey = jwtSecretKey;
     }
 
-    public (bool Success, string Message) CreateUser(string username, string password, string role)
+    public (bool Success, string Message) RegisterUser(string username, string password, string role)
     {
         // Check if the username already exists using the GetUserByUsername method
         var existingUser = GetUserByUsername(username);
