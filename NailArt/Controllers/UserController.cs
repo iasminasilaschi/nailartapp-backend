@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using NailArt.Models;
 using NailArt.Services;
+using NailArtApp.Models;
 
 namespace NailArtApp.Controllers
 {
@@ -16,25 +17,26 @@ namespace NailArtApp.Controllers
         }
 
         [HttpPost("register")]
-        public IActionResult Register()
+        public IActionResult Register([FromBody] RegisterUserModel model)
         {
-            //var result = _userService.RegisterUser(model.Username, model.Password, model.Role);
-            //if (!result.Success)
-            //{
-            //    return BadRequest(result.Message);
-            //}
-            return Ok("result.Message");
+            var (Success, Message) = _userService.RegisterUser(model.Username, model.Password, model.Role);
+            if (!Success)
+            {
+                return BadRequest(new { message = Message });
+            }
+
+            return Ok(new { message = Message });
         }
 
         [HttpPost("login")]
-        public IActionResult Login(string username, string password)
+        public IActionResult Login([FromBody] LoginUserModel model)
         {
-            var result = _userService.AuthenticateUser(username, password);
-            if (!result.Success)
+            var (Success, Token, Message) = _userService.AuthenticateUser(model.Username, model.Password);
+            if (!Success)
             {
-                return BadRequest(result.Message);
+                return BadRequest(new { message = Message });
             }
-            return Ok(new { token = result.Token });
+            return Ok(new { token = Token });
         }
     }
 
