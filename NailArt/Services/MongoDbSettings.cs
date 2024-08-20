@@ -1,4 +1,4 @@
-﻿namespace NailArtApp.Backend.Settings
+﻿namespace NailArtApp.Services
 {
     public class MongoDbSettings
     {
