@@ -1,11 +1,23 @@
 using MongoDB.Driver;
 using MongoDB.Bson;
-using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
+using NailArt.Services;
 
 var builder = WebApplication.CreateBuilder(args);
+
+// Enable CORS
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AllowAll",
+        builder =>
+        {
+            builder.AllowAnyOrigin()
+                   .AllowAnyHeader()
+                   .AllowAnyMethod();
+        });
+});
 
 // Retrieve MongoDB connection string and database name from appsettings.json
 var mongoDBSettings = builder.Configuration.GetSection("MongoDBSettings");
@@ -47,14 +59,16 @@ builder.Services.AddSingleton<UserService>(sp => new UserService(sp.GetRequiredS
 
 var app = builder.Build();
 
+app.UseCors("AllowAll");
+
 app.UseAuthentication();
 app.UseAuthorization();
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {
-    app.UseSwagger();
-    app.UseSwaggerUI();
+    //app.UseSwagger();
+    //app.UseSwaggerUI();
 }
 
 app.UseHttpsRedirection();
