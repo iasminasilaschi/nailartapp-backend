@@ -22,10 +22,10 @@ namespace NailArtApp.Controllers
             var (Success, Message) = _userService.RegisterUser(model.Username, model.Password, model.Role);
             if (!Success)
             {
-                return BadRequest(new { message = Message });
+                return BadRequest(Message);
             }
 
-            return Ok(new { message = Message });
+            return Ok(Message);
         }
 
         [HttpPost("login")]
@@ -34,9 +34,9 @@ namespace NailArtApp.Controllers
             var (Success, Token, Message) = _userService.AuthenticateUser(model.Username, model.Password);
             if (!Success)
             {
-                return BadRequest(new { message = Message });
+                return BadRequest(Message);
             }
-            return Ok(new { token = Token });
+            return Ok(Token);
         }
     }
 
