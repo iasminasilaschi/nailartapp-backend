@@ -18,18 +18,18 @@ namespace NailArtApp.Controllers
             _appointmentService = appointmentService;
         }
 
-        // POST api/appointment/create
         [HttpPost("create")]
         public IActionResult CreateAppointment([FromBody] Appointment appointment)
         {
-            if (appointment == null)
+            var (Success, Message) = _appointmentService.CreateAppointment(appointment);
+            if (!Success)
             {
-                return BadRequest("Appointment is null.");
+                return BadRequest(Message);
             }
 
-            _appointmentService.CreateAppointment(appointment);
-            return Ok("Appointment created successfully.");
+            return Ok(Message);
         }
+
 
         [HttpGet("getAppointments")]
         [Authorize] // Ensure the user is authenticated
