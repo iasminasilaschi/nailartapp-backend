@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
 using NailArt.Services;
+using NailArtApp.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -56,6 +57,7 @@ builder.Services.AddControllers();
 
 // Register UserService with the DI container, passing in the secret key
 builder.Services.AddSingleton<UserService>(sp => new UserService(sp.GetRequiredService<IMongoDatabase>(), builder.Configuration["JwtSettings:SecretKey"]));
+builder.Services.AddSingleton<AppointmentService>();
 
 var app = builder.Build();
 

@@ -7,7 +7,7 @@ namespace NailArtApp.Models
     {
         [BsonId]
         [BsonRepresentation(BsonType.ObjectId)]
-        public string Id { get; set; }
+        public string ?Id { get; set; }
 
         [BsonElement("date")]
         public DateTime Date { get; set; }
@@ -15,11 +15,11 @@ namespace NailArtApp.Models
         [BsonElement("time")]
         public string Time { get; set; }
 
-        [BsonElement("clientId")]
-        public string ClientId { get; set; }
+        [BsonElement("clientUsername")]
+        public string ClientUsername { get; set; }
 
-        [BsonElement("artistId")]
-        public string ArtistId { get; set; }
+        [BsonElement("artistUsername")]
+        public string ArtistUsername { get; set; }
 
         [BsonElement("serviceType")]
         public string ServiceType { get; set; }
